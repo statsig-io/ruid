@@ -1,6 +1,8 @@
 mod config;
 
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{client::Client, web, App, HttpResponse, HttpServer, Responder};
+use std::net::Ipv4Addr;
+use std::str;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -62,7 +64,7 @@ async fn main() -> std::io::Result<()> {
     let epoch: SystemTime = UNIX_EPOCH + std::time::Duration::from_millis(config::DRLC);
 
     let region: u64 = 2;
-    let node: u64 = 5;
+    let node: u64 = get_node_id().await;
     let suffix: u64 = (region << config::NODE_BITS) + node;
 
     let data = web::Data::new(RuidGeneratorData {
@@ -95,4 +97,28 @@ fn timestamp(epoch: SystemTime) -> u64 {
     }
 
     t as u64
+}
+
+async fn get_node_id() -> u64 {
+    let ip_utf8_bytes = Client::default()
+        .get("http://169.254.169.254/latest/meta-data/local-ipv4")
+        .send()
+        .await
+        .unwrap()
+        .body()
+        .await
+        .unwrap();
+
+    let mut ip_string = String::from(str::from_utf8(&ip_utf8_bytes).unwrap());
+    ip_string.retain(|c| !c.is_whitespace());
+
+    let ip = ip_string.parse::<Ipv4Addr>().unwrap();
+
+    if config::NODE_BITS > 8 {
+        panic!("Can only parse up to 8 bits for node")
+    }
+    let last_octet = ip.octets()[3] as u64;
+    let mask = (1 << config::NODE_BITS) - 1;
+
+    last_octet & mask
 }
