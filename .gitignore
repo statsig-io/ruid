@@ -1,0 +1,10 @@
+# Cargo binaries
+debug/
+target/
+
+# Compiled binaries
+**/*.exe
+**/*.pdb
+
+# rustfmt backup
+**/*.rs.bk
