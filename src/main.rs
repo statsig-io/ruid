@@ -63,9 +63,9 @@ async fn id_endpoint(data: web::Data<RuidGeneratorData>) -> impl Responder {
 async fn main() -> std::io::Result<()> {
     let epoch: SystemTime = UNIX_EPOCH + std::time::Duration::from_millis(config::DRLC);
 
-    let region: u64 = 2;
+    let cluster: u64 = 2;
     let node: u64 = get_node_id().await;
-    let suffix: u64 = (region << config::NODE_BITS) + node;
+    let suffix: u64 = (cluster << config::NODE_BITS) + node;
 
     let data = web::Data::new(RuidGeneratorData {
         epoch: epoch,
