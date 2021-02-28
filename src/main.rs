@@ -16,29 +16,40 @@ struct RuidGeneratorData {
 }
 
 async fn id_endpoint(data: web::Data<RuidGeneratorData>) -> impl Responder {
+    let sequence: u64;
     let mut time = timestamp(data.epoch);
-    let mut state = data.state.lock().unwrap();
-    let sequence = state.sequence + 1;
-    if sequence > config::MAX_SEQUENCE {
-        panic!("max sequence was too short")
-    }
-
-    // Accept clocks going backwards for up to 1 second
-    // This will skew up to 1000x ids in the backwards ms
-    // TODO(intern): skew up to 2x distributed over the next 1000ms
-    if time < state.time {
-        if time + 1000 < state.time {
-            panic!("time-travelling {}ms", state.time - time)
+    let mut err: String = String::from("");
+    {
+        let mut state = data.state.lock().unwrap();
+        sequence = state.sequence + 1;
+        if sequence > config::MAX_SEQUENCE {
+            err = String::from("max sequence was too short");
         }
 
-        time = state.time;
+        // Accept clocks going backwards for up to 1 second
+        // This will skew up to 1000x ids in the backwards ms
+        // TODO(intern): skew up to 2x distributed over the next 1000ms
+        if time < state.time {
+            if time + 1000 > state.time {
+                err = format!("time-travelling {}ms", state.time - time)
+            } else {
+                time = state.time;
+            }
+        }
+
+        if err == "" {
+            if time == state.time {
+                state.sequence = sequence;
+            } else {
+                state.time = time;
+                state.sequence = 0;
+            }
+        }
     }
 
-    if time == state.time {
-        state.sequence = sequence;
-    } else {
-        state.time = time;
-        state.sequence = 0;
+    // All errors self-resolve after a while, so panic outside the mutex lock.
+    if err != "" {
+        panic!(err);
     }
 
     let id: u64 =
