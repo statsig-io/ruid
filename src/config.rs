@@ -31,3 +31,15 @@ pub static SEQUENCE_BITS: u8 = 64 - CLUSTER_BITS - NODE_BITS - TIMESTAMP_BITS;
 pub static MAX_SEQUENCE: u64 = (2 << SEQUENCE_BITS) - 1;
 pub static TIMESTAMP_SHIFT: u8 = SEQUENCE_BITS + CLUSTER_BITS + NODE_BITS;
 pub static SEQUENCE_SHIFT: u8 = CLUSTER_BITS + NODE_BITS;
+
+macro_rules! node_ip_uri {
+    () => {
+        if cfg!(feature = "local") {
+            "http://icanhazip.com/"
+        } else if cfg!(feature = "aws-ec2") {
+            "http://169.254.169.254/latest/meta-data/local-ipv4"
+        } else {
+            panic!("node_ip_uri not set")
+        }
+    };
+}

@@ -1,3 +1,4 @@
+#[macro_use]
 mod config;
 
 use actix_web::{client::Client, web, App, HttpResponse, HttpServer, Responder};
@@ -101,7 +102,7 @@ fn timestamp(epoch: SystemTime) -> u64 {
 
 async fn get_node_id() -> u64 {
     let ip_utf8_bytes = Client::default()
-        .get("http://169.254.169.254/latest/meta-data/local-ipv4")
+        .get(node_ip_uri!())
         .send()
         .await
         .unwrap()
