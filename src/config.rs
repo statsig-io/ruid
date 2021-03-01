@@ -21,6 +21,7 @@ pub static MAX_TIMESTAMP: u128 = (1 << TIMESTAMP_BITS) - 1;
 
 // Accept up to 32 clusters.
 pub static CLUSTER_BITS: u8 = 5;
+pub static MAX_CLUSTER: u64 = (1 << CLUSTER_BITS) - 1;
 
 // 14.43 bits sequence is enough for sequence to not overflow in Rodrigo's
 // computer. Cloud machines won't be as fast and will have extra overhead

@@ -2,6 +2,7 @@
 mod config;
 
 use actix_web::{client::Client, web, App, HttpResponse, HttpServer, Responder};
+use std::env;
 use std::net::Ipv4Addr;
 use std::str;
 use std::sync::Mutex;
@@ -62,12 +63,18 @@ async fn id_endpoint(data: web::Data<RuidGeneratorData>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let epoch: SystemTime = UNIX_EPOCH + std::time::Duration::from_millis(config::DRLC);
-
-    let cluster: u64 = 2;
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        panic!("Specify exactly 1 arg with cluster id");
+    }
+    let cluster: u64 = args[1].parse::<u64>().expect("cluster id not u64");
+    if cluster > config::MAX_CLUSTER {
+        panic!("Cluster gt {}", config::MAX_CLUSTER);
+    }
     let node: u64 = get_node_id().await;
     let suffix: u64 = (cluster << config::NODE_BITS) + node;
 
+    let epoch: SystemTime = UNIX_EPOCH + std::time::Duration::from_millis(config::DRLC);
     let data = web::Data::new(RuidGeneratorData {
         epoch: epoch,
         node_suffix: suffix,
