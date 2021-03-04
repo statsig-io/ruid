@@ -8,11 +8,9 @@ An _RUID root_ is a set of RUID generators where each generator can be uniquely 
 
 The canonical version of RUIDs (this repo) uses 41 bits for timestamp, 14 bits for a monotonically increasing sequence, and 9 bits for the root id.
 
-41 bits is enough to cover Rodrigo's projected lifespan in milliseconds.
-
-14 bits is about the # of RUIDs that can be generated single threaded in Rodrigo's personal computer (~20M ids per second).
-
-9 bits is what remains after the calculations above, and is used for root id. The root id is further split into 5 bits for a cluster id, and 4 bits for a node id.
+- 41 bits is enough to cover Rodrigo's projected lifespan in milliseconds.
+- 14 bits is about the # of RUIDs that can be generated single threaded in Rodrigo's personal computer (~20M ids per second).
+- 9 bits is what remains after the calculations above, and is used for root id. The root id is further split into 5 bits for a cluster id, and 4 bits for a node id.
 
 # Time Travel
 
@@ -20,9 +18,9 @@ RUIDs are designed with time travel as a requirement. Whereas other unique id im
 
 In v0.1, this is achieved by:
 
-a. Defining a millisecond maximum time travel threshold `MMTTT` (sometimes shortened as `M2T3`).
-b. Comparing the current generation timestamp `Ct` with the previous generation timestamp `Pt`. When `Ct < Ct + MMTTT < Pt`, RUIDs are generated with `Pt` as the timestamp.
-c. Sleeping for `MMTTT` when the server starts, and validating the system clock indeed increased by at least `MMTTT` at the end.
+- Defining a millisecond maximum time travel threshold `MMTTT` (sometimes shortened as `M2T3`).
+- Comparing the current generation timestamp `Ct` with the previous generation timestamp `Pt`. When `Ct < Ct + MMTTT < Pt`, RUIDs are generated with `Pt` as the timestamp.
+- Sleeping for `MMTTT` when the server starts, and validating the system clock indeed increased by at least `MMTTT` at the end.
 
 Note that timestamps for RUIDs generated after time travel and before MMTTT has elapsed will not match the system's clock, which is both a feature and a bug (unsurprisingly, time travel incurs bug/feature duality).
 
