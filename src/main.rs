@@ -6,7 +6,8 @@ use std::env;
 use std::net::Ipv4Addr;
 use std::str;
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 struct RuidGeneratorState {
     time: u64,
@@ -31,10 +32,10 @@ async fn id_endpoint(data: web::Data<RuidGeneratorData>) -> impl Responder {
         }
 
         // Accept clocks going backwards for up to 1 second
-        // This will skew up to 1000x ids in the backwards ms
-        // TODO(intern): skew up to 2x distributed over the next 1000ms
+        // This will skew up to MMTTT ids in the backwards ms
+        // TODO(intern): skew up to 2x distributed over the next MMTTT.
         if time < state.time {
-            if time + 1000 > state.time {
+            if time + config::MMTTT > state.time {
                 err = format!("time-travelling {}ms", state.time - time)
             } else {
                 time = state.time;
@@ -74,12 +75,19 @@ async fn main() -> std::io::Result<()> {
     let node: u64 = get_node_id().await;
     let suffix: u64 = (cluster << config::NODE_BITS) + node;
 
-    let epoch: SystemTime = UNIX_EPOCH + std::time::Duration::from_millis(config::DRLC);
+    let epoch: SystemTime = UNIX_EPOCH + Duration::from_millis(config::DRLC);
+    let t: u64 = timestamp(epoch);
+    thread::sleep(Duration::from_millis(config::MMTTT));
+    let initial_time: u64 = timestamp(epoch);
+    if t + config::MMTTT > initial_time {
+        panic!("Time travelled while time travelling")
+    }
+
     let data = web::Data::new(RuidGeneratorData {
         epoch: epoch,
         node_suffix: suffix,
         state: Mutex::new(RuidGeneratorState {
-            time: 0,
+            time: initial_time,
             sequence: 0,
         }),
     });

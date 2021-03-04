@@ -15,6 +15,9 @@
 //
 pub static DRLC: u64 = 1201737600000;
 
+// Millisecond Maximum Time Travel Threshold
+pub static MMTTT: u64 = 1000;
+
 // 69.68 years in milliseconds. This covers Rodrigo's lifespan with DRLC epoch.
 pub static TIMESTAMP_BITS: u8 = 41;
 pub static MAX_TIMESTAMP: u128 = (1 << TIMESTAMP_BITS) - 1;
